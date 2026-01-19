@@ -1,0 +1,23 @@
+name : Deloy Production Backend
+on : 
+  push :
+    branches :['main']
+  pull_request :
+    branches :['main']
+jobs :
+  build :
+    runs-on : ubuntu-latest
+    steps :
+       use : actions/checkout@v2
+       name : use Node.js ${{ matrix.node-version }}
+       use : actions/setup-node@v2
+       with : 
+          node-version: 20.20.0
+          cache : 'npm'
+          name : Create .env file
+          run : echo "${{ secrets.ENV_PRODUCTION }}" > .env
+          run: npm i --force
+          run: npm run build
+
+          
+      
