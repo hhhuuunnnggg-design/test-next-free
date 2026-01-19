@@ -30,7 +30,7 @@ export default function ButtonLogout() {
   }
   return (
     <Button size={'sm'} onClick={handleLogout}>
-      Đăng xuất
+      Đăng xuất...
     </Button>
   )
 }
