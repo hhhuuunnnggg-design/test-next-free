@@ -25,7 +25,10 @@ jobs:
           echo "${{ secrets.ENV_PRODUCTION }}" > .env
 
       - name: Install dependencies
-        run: npm install --force
+        run: |
+            cd server
+            npm install --force
+            npm run build
 
       - name: Build project
         run: npm run build
