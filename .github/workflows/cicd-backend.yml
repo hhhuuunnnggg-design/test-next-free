@@ -31,4 +31,5 @@ jobs:
             npm run build
 
       - name: Build project
+        working-directory: server
         run: npm run build
