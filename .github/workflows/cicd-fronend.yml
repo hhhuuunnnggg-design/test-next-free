@@ -73,7 +73,7 @@ jobs:
                   npm i --force
                   npx prisma generate
                   npm run build
-                  pm2 restart NextJS
+                  pm2 restart NextJs
       
       - name: Debug SSH key existence
         run: |
