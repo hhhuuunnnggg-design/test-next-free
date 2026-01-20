@@ -1,0 +1,83 @@
+name: Deploy Production frontend
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      # - name: Setup Node.js 20
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: 20.20.0
+      #     cache: npm
+
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.ENV_PRODUCTION_FRONTEND }}" > .env
+
+      - name: Install dependencies
+        run: |
+            cd server
+            npm install --force
+            npm run build
+
+      - name: Build project
+        working-directory: server
+        run: npm run build
+  Deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Check required secrets exist
+        run: |
+          [ -z "${{ secrets.HOST_PRODUCTION }}" ] && echo "❌ HOST_PRODUCTION is EMPTY" || echo "✅ HOST_PRODUCTION is set"
+          [ -z "${{ secrets.USERNAME_PRODUCTION }}" ] && echo "❌ USERNAME_PRODUCTION is EMPTY" || echo "✅ USERNAME_PRODUCTION is set"
+          [ -z "${{ secrets.PORT_PRODUCTION }}" ] && echo "❌ PORT_PRODUCTION is EMPTY" || echo "✅ PORT_PRODUCTION is set"
+          [ -z "${{ secrets.PASSWORD_PRODUCTION }}" ] && echo "❌ PASSWORD_PRODUCTION is EMPTY" || echo "✅ PASSWORD_PRODUCTION is set"
+          [ -z "${{ secrets.ENV_PRODUCTION_FRONTEND }}" ] && echo "❌ ENV_PRODUCTION_FRONTEND is EMPTY" || echo "✅ ENV_PRODUCTION_FRONTEND is set"
+  
+      - name: Create SSH key file
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+        
+
+      - name: Execute remote SSH commands using SSH key
+        uses: appleboy/ssh-action@v1
+        with:
+            host: ${{ secrets.HOST_PRODUCTION }}
+            username: prod
+            key_path: /home/runner/.ssh/id_ed25519
+            port: 22
+            script: |
+                  export NVM_DIR=~/.nvm
+                  source ~/.nvm/nvm.sh
+                  cd ~/nextjs-free/client
+                  git fetch --all
+                  git reset --hard origin/main
+                  echo "${{ secrets.ENV_PRODUCTION_FRONTEND }}" > .env
+                  npm i --force
+                  npx prisma generate
+                  npm run build
+                  pm2 restart NextJS
+      
+      - name: Debug SSH key existence
+        run: |
+          whoami
+          ls -l /home/runner/.ssh
+          cat /home/runner/.ssh/id_ed25519
+        
