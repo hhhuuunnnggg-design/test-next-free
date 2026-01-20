@@ -48,21 +48,30 @@ jobs:
           [ -z "${{ secrets.PORT_PRODUCTION }}" ] && echo "❌ PORT_PRODUCTION is EMPTY" || echo "✅ PORT_PRODUCTION is set"
           [ -z "${{ secrets.PASSWORD_PRODUCTION }}" ] && echo "❌ PASSWORD_PRODUCTION is EMPTY" || echo "✅ PASSWORD_PRODUCTION is set"
           [ -z "${{ secrets.ENV_PRODUCTION }}" ] && echo "❌ ENV_PRODUCTION is EMPTY" || echo "✅ ENV_PRODUCTION is set"
-      
-      - name: Execute remote SSH commands using password
+  
+      - name: Create SSH key file
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+        
+
+      - name: Execute remote SSH commands using SSH key
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST_PRODUCTION }}
-          username: ${{ secrets.USERNAME_PRODUCTION }}
-          port: ${{ secrets.PORT_PRODUCTION }}
+          username: prod
+          key_path: ~/.ssh/id_ed25519
+          port: 22
           script: |
                 export NVM_DIR=~/.nvm
                 source ~/.nvm/nvm.sh
                 cd ~/nextjs-free/
                 git fetch --all
                 git reset --hard origin/main
-                echo "${{secrets.ENV_PRODUCTION}}" > .env
+                echo "${{ secrets.ENV_PRODUCTION }}" > .env
                 npm i --force
                 npx prisma generate
                 npm run build
                 pm2 restart Fastify
+        
