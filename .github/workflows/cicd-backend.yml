@@ -41,13 +41,21 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
+      - name: Check required secrets exist
+        run: |
+          [ -z "${{ secrets.HOST_PRODUCTION }}" ] && echo "❌ HOST_PRODUCTION is EMPTY" || echo "✅ HOST_PRODUCTION is set"
+          [ -z "${{ secrets.USERNAME_PRODUCTION }}" ] && echo "❌ USERNAME_PRODUCTION is EMPTY" || echo "✅ USERNAME_PRODUCTION is set"
+          [ -z "${{ secrets.PORT_PRODUCTION }}" ] && echo "❌ PORT_PRODUCTION is EMPTY" || echo "✅ PORT_PRODUCTION is set"
+          [ -z "${{ secrets.PASSWORD_PRODUCTION }}" ] && echo "❌ PASSWORD_PRODUCTION is EMPTY" || echo "✅ PASSWORD_PRODUCTION is set"
+          [ -z "${{ secrets.ENV_PRODUCTION }}" ] && echo "❌ ENV_PRODUCTION is EMPTY" || echo "✅ ENV_PRODUCTION is set"
+      
       - name: Execute remote SSH commands using password
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST_PRODUCTION }}
           username: ${{ secrets.USERNAME_PRODUCTION }}
-          # password: ${{ secrets.PASSWORD_PRODUCTION }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          password: ${{ secrets.PASSWORD_PRODUCTION }}
+          # key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.PORT_PRODUCTION }}
           script: |
                 export NVM_DIR=~/.nvm
